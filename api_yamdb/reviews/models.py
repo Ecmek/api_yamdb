@@ -9,8 +9,16 @@ class Comment(models.Model):
 
 
 class Rewiew(models.Model):
-    title = models.ForeignKey('Title', on_delete=models.CASCADE)
+    title = models.ForeignKey(
+        'Title',
+        on_delete=models.CASCADE,
+        related_name='rewiews'
+    )
     text = models.TextField()
     author = models.ForeignKey('User', on_delete=models.CASCADE)
-    score = models.IntegerField(blank=True, null=True)
+    score = models.IntegerField()
     pub_date = models.DateTimeField(auto_now_add=True)
+
+
+class Title(models.Model):
+    None
