@@ -1,29 +1,52 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import status
-from rest_framework import viewsets
+from rest_framework import status, viewsets, filters
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from reviews.models import User
 from .serializers import (
     AdminUserSerializer, TokenSerializer, SignupSerializer
 )
+from .permissions import IsRoleAdmin
 from .mails import send_confirmation_code
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = AdminUserSerializer
+    permission_classes = (IsRoleAdmin | IsAdminUser,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
 
-    @action(detail=False, url_path='me')
+    @action(
+        detail=False, url_path='me',
+        methods=['get', 'patch'],
+        permission_classes=(IsAuthenticated,)
+    )
     def about_me(self, request):
-        serializer = AdminUserSerializer(request.user)
+        if request.method == 'GET':
+            serializer = AdminUserSerializer(request.user)
+        if request.method == 'PATCH':
+            serializer = AdminUserSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False, methods=['get', 'patch', 'delete'],
+        url_path=r'(?P<username>[\w\@\.\+\-\_]+)'
+    )
+    def get_user(self, request, username):
+        user = get_object_or_404(User, username=username)
+        serializer = AdminUserSerializer(user)
         return Response(serializer.data)
 
 
 class SignupAPIView(APIView):
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
@@ -35,6 +58,7 @@ class SignupAPIView(APIView):
 
 
 class TokenAPIView(APIView):
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
