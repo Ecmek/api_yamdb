@@ -15,7 +15,7 @@ ROLE_CHOICES = (
 
 class UserManager(BaseUserManager):
     """Create and return a `User` with an email, username and password."""
-    def create_user(self, username, email, password=None):
+    def create_user(self, username, email, password=None, role='user', bio=None):
         if username is None:
             raise TypeError('Users must have a username.')
 
@@ -28,7 +28,7 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, username, email, password):
+    def create_superuser(self, username, email, password, role='admin', bio=None):
         """
         Create and return a `User` with superuser (admin) role.
         """
@@ -38,7 +38,6 @@ class UserManager(BaseUserManager):
         user = self.create_user(username, email, password)
         user.is_superuser = True
         user.is_staff = True
-        user.role = 'admin'
         user.save()
 
         return user

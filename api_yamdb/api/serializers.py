@@ -3,7 +3,6 @@ from reviews.models import User
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    role = serializers.StringRelatedField()
 
     class Meta:
         model = User
