@@ -4,10 +4,11 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
 from reviews.models import User
 from .serializers import (
-    AdminUserSerializer, TokenSerializer, SignupSerializer
+    AdminUserSerializer, TokenSerializer, SignupSerializer, UserSerializer
 )
 from .permissions import IsRoleAdmin
 from .mails import send_confirmation_code
@@ -16,7 +17,7 @@ from .mails import send_confirmation_code
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = AdminUserSerializer
-    permission_classes = (IsRoleAdmin | IsAdminUser,)
+    permission_classes = (IsRoleAdmin,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
 
@@ -29,9 +30,9 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = AdminUserSerializer(request.user)
         if request.method == 'PATCH':
-            serializer = AdminUserSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
+            serializer = UserSerializer(request.user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(instance=request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -42,7 +43,17 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_user(self, request, username):
         user = get_object_or_404(User, username=username)
         serializer = AdminUserSerializer(user)
-        return Response(serializer.data)
+        if request.method == 'PACTH':
+            serializer = AdminUserSerializer(user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        if request.method == 'DELETE':
+            user.delete()
+            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def perform_update(self, serializer):
+        serializer.save(data=self.request.data, user=self.request.user)
 
 
 class SignupAPIView(APIView):
