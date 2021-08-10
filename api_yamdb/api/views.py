@@ -30,7 +30,9 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = AdminUserSerializer(request.user)
         if request.method == 'PATCH':
-            serializer = UserSerializer(request.user, data=request.data, partial=True)
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save(instance=request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -44,16 +46,15 @@ class UserViewSet(viewsets.ModelViewSet):
         user = get_object_or_404(User, username=username)
         serializer = AdminUserSerializer(user)
         if request.method == 'PACTH':
-            serializer = AdminUserSerializer(user, data=request.data, partial=True)
+            serializer = UserSerializer(
+                user, data=request.data, partial=True
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
         if request.method == 'DELETE':
             user.delete()
             return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def perform_update(self, serializer):
-        serializer.save(data=self.request.data, user=self.request.user)
 
 
 class SignupAPIView(APIView):

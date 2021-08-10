@@ -5,6 +5,7 @@ from reviews.models import User
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True)
     email = serializers.CharField(required=True)
+    role = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = User
