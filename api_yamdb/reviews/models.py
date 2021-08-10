@@ -1,8 +1,5 @@
-import jwt
 import uuid
-import datetime as dt
 
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
@@ -14,8 +11,9 @@ ROLE_CHOICES = (
 
 
 class UserManager(BaseUserManager):
-    """Create and return a `User` with an email, username and password."""
-    def create_user(self, username, email, password=None, role='user', bio=None):
+    """Create and return a `User` with an email, username"""
+    def create_user(self, username, email, password=None, role='user',
+                    bio=None):
         if username is None:
             raise TypeError('Users must have a username.')
 
@@ -28,7 +26,8 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, username, email, password, role='admin', bio=None):
+    def create_superuser(self, username, email, password, role='admin',
+                         bio=None):
         """
         Create and return a `User` with superuser (admin) role.
         """

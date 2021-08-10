@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -6,7 +7,9 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import User
-from .serializers import AdminUserSerializer, LoginSerializer, RegistrationSerializer
+from .serializers import (
+    AdminUserSerializer, TokenSerializer, SignupSerializer
+)
 from .mails import send_confirmation_code
 
 
@@ -20,10 +23,10 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class RegistrationAPIView(APIView):
+class SignupAPIView(APIView):
 
     def post(self, request):
-        serializer = RegistrationSerializer(data=request.data)
+        serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             send_confirmation_code(user)
@@ -31,22 +34,25 @@ class RegistrationAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginAPIView(APIView):
+class TokenAPIView(APIView):
 
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
+        serializer = TokenSerializer(data=request.data)
         if serializer.is_valid():
             username = serializer.data['username']
             confirmation_code = serializer.data['confirmation_code']
-            try:
-                User.objects.get(username=username)
-            except User.DoesNotExist:
-                return Response({'USER_NOT_FOUND'}, status=status.HTTP_404_NOT_FOUND)
+            user = get_object_or_404(User, username=username)
 
             try:
-                user = User.objects.get(username=username, confirmation_code=confirmation_code)
+                user = User.objects.get(
+                    username=username,
+                    confirmation_code=confirmation_code
+                )
             except User.DoesNotExist:
-                return Response({'USER_NOT_FOUND'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Not found."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             token = RefreshToken.for_user(user)
             return Response(

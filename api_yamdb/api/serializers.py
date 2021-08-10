@@ -18,7 +18,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
         return value
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class SignupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
@@ -32,7 +32,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return value
 
 
-class LoginSerializer(serializers.ModelSerializer):
+class TokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)
 
