@@ -1,6 +1,5 @@
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.generics import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -40,9 +39,18 @@ class LoginAPIView(APIView):
             username = serializer.data['username']
             confirmation_code = serializer.data['confirmation_code']
             try:
-                user = User.objects.get(username=username, confirmation_code=confirmation_code)
+                User.objects.get(username=username)
             except User.DoesNotExist:
                 return Response({'USER_NOT_FOUND'}, status=status.HTTP_404_NOT_FOUND)
+
+            try:
+                user = User.objects.get(username=username, confirmation_code=confirmation_code)
+            except User.DoesNotExist:
+                return Response({'USER_NOT_FOUND'}, status=status.HTTP_400_BAD_REQUEST)
+
             token = RefreshToken.for_user(user)
-            return Response({'token': str(token.access_token)}, status=status.HTTP_200_OK)
+            return Response(
+                {'token': str(token.access_token)},
+                status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
