@@ -2,16 +2,16 @@ from django.urls import include, path
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .views import CommentViewSet, RewiewViewSet
+from .views import CommentViewSet, ReviewViewSet
 from .views import UserViewSet, SignupAPIView, TokenAPIView
 
 v1 = routers.DefaultRouter()
 v1.register('users', UserViewSet)
 v1.register(
-    r'titles/(?P<title_id>\d+)/rewiews/(?P<rewiew_id>\d+)/comments',
+    r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments/',
     CommentViewSet
 )
-v1.register(r'titles/(?P<title_id>\d+)/rewiews', RewiewViewSet)
+v1.register(r'titles/(?P<title_id>\d+)/reviews/', ReviewViewSet)
 
 urlpatterns = [
     path('v1/', include(v1.urls)),

@@ -5,17 +5,17 @@ from django.db import models
 
 
 class Comment(models.Model):
-    rewiew = models.ForeigKey('Rewiew', on_delete=models.CASCADE)
+    review = models.ForeignKey('Review', on_delete=models.CASCADE)
     text = models.TextField()
     author = models.ForeignKey('User', on_delete=models.CASCADE)
     pub_date = models.DateTimeField(auto_now_add=True)
 
 
-class Rewiew(models.Model):
+class Review(models.Model):
     title = models.ForeignKey(
         'Title',
         on_delete=models.CASCADE,
-        related_name='rewiews'
+        related_name='reviews'
     )
     text = models.TextField()
     author = models.ForeignKey('User', on_delete=models.CASCADE)

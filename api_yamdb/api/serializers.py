@@ -1,29 +1,38 @@
-
 from django.db.models import Avg
 
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from rewiews.models import Comment, Rewiew, Title, User
+from reviews.models import Comment, Review, Title, User
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True
+    )
 
     class Meta:
-        fields = ('id', 'rewiew', 'text', 'author', 'pub_date')
+        fields = ('id', 'review', 'text', 'author', 'pub_date')
         model = Comment
 
 
-class RewiewSerializer(serializers.ModelSerializer):
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True
+    )
+    title = serializers.SlugRelatedField(
+        slug_field='title', read_only=True
+    )
 
     class Meta:
         fields = ('id', 'title', 'text', 'author', 'score', 'pub_date')
-        model = Rewiew
+        model = Review
 
     def validate_score(self, value):
         if value not in range(1, 11):
             raise serializers.ValidationError(
                 'Оценкой должно быть целое число от 1 до 10.'
+            )
         return value
 
 
@@ -71,7 +80,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
     def get_rating(self, obj):
         title = get_object_or_404(Title, id=obj.id)
-        rating = title.rewiews.all().aggregate(Avg('score'))
+        rating = title.reviews.all().aggregate(Avg('score'))
         return rating
 
 
