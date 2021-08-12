@@ -3,7 +3,7 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from reviews.models import Comment, Review, Title, User
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -12,7 +12,7 @@ class CommentSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('id', 'review', 'text', 'author', 'pub_date')
+        fields = ('id', 'text', 'author', 'pub_date')
         model = Comment
 
 
@@ -21,7 +21,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username', read_only=True
     )
     title = serializers.SlugRelatedField(
-        slug_field='title', read_only=True
+        slug_field='name', read_only=True
     )
 
     class Meta:
@@ -29,7 +29,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
 
     def validate_score(self, value):
-        if value not in range(1, 11):
+        if not 1 <= value <= 10:
             raise serializers.ValidationError(
                 'Оценкой должно быть целое число от 1 до 10.'
             )
@@ -71,17 +71,32 @@ class AdminUserSerializer(serializers.ModelSerializer):
         return value
 
 
+################################################################################
+################################################################################
 class TitleSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('id', 'rating')
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+        )
 
     def get_rating(self, obj):
         title = get_object_or_404(Title, id=obj.id)
         rating = title.reviews.all().aggregate(Avg('score'))
         return rating
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    model = Category
+    fields = ('name', 'slug')
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    model = Genre
+    fields = ('name', 'slug')
+################################################################################
 
 
 class SignupSerializer(serializers.ModelSerializer):

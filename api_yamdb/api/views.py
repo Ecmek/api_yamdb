@@ -6,14 +6,17 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from reviews.models import Comment, Review, Title, User
+from reviews.models import Category, Comment, Genre, Review, Title, User
 from .mails import send_confirmation_code
 from .permissions import IsRoleAdmin
 from .serializers import (
     AdminUserSerializer,
+    CategorySerializer,
     CommentSerializer,
+    GenreSerializer,
     ReviewSerializer,
     SignupSerializer,
+    TitleSerializer,
     TokenSerializer,
     UserSerializer
 )
@@ -39,6 +42,26 @@ class ReviewViewSet(viewsets.ModelViewSet):
         title_id = self.kwargs.get('title_id')
         title = get_object_or_404(Title, id=title_id)
         serializer.save(author=self.request.user, title=title)
+
+################################################################################
+################################################################################
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    # permission_classes = (IsRoleAdmin,)
+
+
+class GenreViewSet(viewsets.ModelViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    # permission_classes = (IsRoleAdmin,)
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    # permission_classes = (IsRoleAdmin,)
+################################################################################
 
 
 class UserViewSet(viewsets.ModelViewSet):
