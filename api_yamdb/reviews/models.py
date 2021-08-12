@@ -1,43 +1,74 @@
+import uuid
+from datetime import date
+from django.contrib.auth.models import AbstractUser
 from django.db import models
+from rest_framework.exceptions import ValidationError
+
+ROLE_CHOICES = (
+    ('user', 'Пользователь'),
+    ('moderator', 'Модератор'),
+    ('admin', 'Администратор'),
+)
 
 
-class Genre(models.Model):
-    name = models.CharField(max_length=20)
-    slug = models.CharField(max_length=30, unique=True)
-
-    def __str__(self):
-        return self.name
+def validate_date(value):
+    current_year = int(date.today().year)
+    if value > current_year or value <= 0:
+        raise ValidationError('Wrong date!')
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=20)
-    slug = models.CharField(max_length=30, unique=True)
+    name = models.TextField('название', blank=False, max_length=150)
+    slug = models.SlugField('slug', blank=False, unique=True, db_index=True)
 
     def __str__(self):
-        return self.name
+        return self.name[0:10]
+
+
+class Genre(models.Model):
+    name = models.TextField('название', blank=False, max_length=150)
+    slug = models.SlugField('slug', blank=False, unique=True, db_index=True)
+
+    def __str__(self):
+        return self.name[0:10]
 
 
 class Title(models.Model):
-    name = models.CharField(db_index=True, max_length=50)
-    year = models.IntegerField(blank=True)
-    description = models.TextField()
-    genre = models.ManyToManyField(
-        Genre, related_name='titles', verbose_name=("Жанр"))
+    name = models.TextField(
+        'название',
+        blank=False,
+        max_length=200,
+        db_index=True
+    )
+    year = models.IntegerField('год', blank=True, validators=[validate_date])
     category = models.ForeignKey(
         Category,
-        verbose_name=("Категория"),
         on_delete=models.SET_NULL,
-        related_name='titles',
         blank=True,
-        null=True
+        null=True,
+        related_name='titles',
+        verbose_name='категория'
+    )
+    genre = models.ManyToManyField(
+        Genre,
+        blank=True,
+        db_index=True,
+        related_name='titles',
+        verbose_name='жанр'
+    )
+    description = models.CharField(
+        'описание',
+        max_length=200,
+        null=True,
+        blank=True
     )
 
-    class Meta:
-        ordering = ['-id', ]
+    def __str__(self):
+        return self.name[0:10]
 
 
 class Comment(models.Model):
-    rewiew = models.ForeignKey('Review', on_delete=models.CASCADE)
+    review = models.ForeignKey('Review', on_delete=models.CASCADE)
     text = models.TextField()
     author = models.ForeignKey('User', on_delete=models.CASCADE)
     pub_date = models.DateTimeField(auto_now_add=True)
@@ -47,9 +78,23 @@ class Review(models.Model):
     title = models.ForeignKey(
         'Title',
         on_delete=models.CASCADE,
-        related_name='rewiews'
+        related_name='reviews'
     )
     text = models.TextField()
     author = models.ForeignKey('User', on_delete=models.CASCADE)
     score = models.IntegerField()
     pub_date = models.DateTimeField(auto_now_add=True)
+
+
+class User(AbstractUser):
+    email = models.EmailField(unique=True,)
+    role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES,
+        default='user'
+    )
+    bio = models.TextField(
+        'Биография',
+        blank=True,
+    )
+    confirmation_code = models.CharField(default=uuid.uuid4, max_length=36)

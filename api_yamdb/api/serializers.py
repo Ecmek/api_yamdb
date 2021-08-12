@@ -2,18 +2,22 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
+from rest_framework import serializers
+from reviews.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
+        fields = ("name", "slug")
         model = Category
-        exclude = ['id']
+        lookup_field = "slug"
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
+        fields = ("name", "slug")
         model = Genre
-        exclude = ['id']
+        lookup_field = "slug"
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
@@ -55,7 +59,54 @@ class RewiewSerializer(serializers.ModelSerializer):
     def validate_score(self, value):
         if value not in range(1, 11):
             raise serializers.ValidationError(
-                'Оценкой должно быть целое число от 1 до 10.'
+                'Оценкой должно быть целое число от 1 до 10.')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=True)
+    email = serializers.CharField(required=True)
+    role = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Username me not allowed'
+            )
+        return value
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Username me not allowed'
+            )
+        return value
+
+
+class SignupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('username', 'email',)
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Username me not allowed'
             )
         return value
 
@@ -71,3 +122,12 @@ class TitleSerializer(serializers.ModelSerializer):
         title = get_object_or_404(Title, id=obj.id)
         rating = title.rewiews.all().aggregate(Avg('score'))
         return rating
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')

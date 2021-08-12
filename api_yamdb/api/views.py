@@ -1,22 +1,30 @@
-from reviews.models import Title, Genre, Category, Review, Comment
+from .mails import send_confirmation_code
+from .serializers import (AdminUserSerializer, SignupSerializer,
+                          TokenSerializer, UserSerializer)
 from django.db.models import Avg
-from .serializers import (TitleReadSerializer,
-                          TitleWriteSerializer,
-                          CommentSerializer,
-                          RewiewSerializer)
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, permissions, status, viewsets, mixins
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from reviews.models import Category, Comment, Genre, Review, Title, User
+from rest_framework.viewsets import GenericViewSet
+
 from api.filters import TitleFilter
-from .permissions import IsRoleAdmin
+
+from .permissions import IsRoleAdmin, IsAdminUserOrReadOnly
+from .serializers import (CommentSerializer, RewiewSerializer,
+                          TitleReadSerializer, TitleWriteSerializer,
+                          CategorySerializer, GenreSerializer)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    serializer_class = TitleReadSerializer
-    queryset = Title.objects.annotate(rating=Avg(
-        'reviews__score')).order_by('-id')
+    queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly,
-        permissions.IsAdminUser,
+        IsAdminUserOrReadOnly
     ]
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter
@@ -25,6 +33,33 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.request.method in ['POST', 'PATCH']:
             return TitleWriteSerializer
         return TitleReadSerializer
+
+
+class MixinSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    GenericViewSet,
+):
+    pass
+
+
+class CategoryViewSet(MixinSet):
+    queryset = Category.objects.all().order_by("id")
+    serializer_class = CategorySerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["=name"]
+    lookup_field = "slug"
+
+
+class GenreViewSet(MixinSet):
+    queryset = Genre.objects.all().order_by("id")
+    serializer_class = GenreSerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["=name"]
+    lookup_field = "slug"
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -37,3 +72,87 @@ class RewiewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = RewiewSerializer
     permission_classes = (IsRoleAdmin,)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = AdminUserSerializer
+    permission_classes = (IsRoleAdmin,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
+
+    @action(
+        detail=False, url_path='me',
+        methods=['get', 'patch'],
+        permission_classes=(IsAuthenticated,)
+    )
+    def about_me(self, request):
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(instance=request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False, methods=['get', 'patch', 'delete'],
+        url_path=r'(?P<username>[\w\@\.\+\-\_]+)', lookup_field='username',
+    )
+    def get_user(self, request, username):
+        user = self.get_object()
+        serializer = AdminUserSerializer(user)
+        if request.method == 'PATCH':
+            serializer = AdminUserSerializer(
+                user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        if request.method == 'DELETE':
+            user.delete()
+            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SignupAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            send_confirmation_code(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TokenAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = TokenSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.data['username']
+            confirmation_code = serializer.data['confirmation_code']
+            user = get_object_or_404(User, username=username)
+
+            try:
+                user = User.objects.get(
+                    username=username,
+                    confirmation_code=confirmation_code
+                )
+            except User.DoesNotExist:
+                return Response(
+                    {"detail": "Not found."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            token = RefreshToken.for_user(user)
+            return Response(
+                {'token': str(token.access_token)},
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
