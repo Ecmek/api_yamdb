@@ -6,21 +6,9 @@ from .views import UserViewSet, SignupAPIView, TokenAPIView, TitleViewSet, Categ
 
 v1 = routers.DefaultRouter()
 v1.register('users', UserViewSet)
-v1.register(
-    'titles',
-    TitleViewSet,
-    basename='title',
-)
-v1.register(
-    'categories',
-    CategoryViewSet,
-    basename='category',
-)
-v1.register(
-    'genres',
-    GenreViewSet,
-    basename='genre',
-)
+v1.register('categories', CategoryViewSet)
+v1.register('genres', GenreViewSet)
+v1.register('titles', TitleViewSet)
 
 urlpatterns = [
     path('v1/', include(v1.urls)),

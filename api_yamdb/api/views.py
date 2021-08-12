@@ -15,7 +15,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from api.filters import TitleFilter
 
-from .permissions import IsRoleAdmin, IsAdminUserOrReadOnly
+from .permissions import IsRoleAdmin, IsAdminOrReadOnly
 from .serializers import (CommentSerializer, RewiewSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
                           CategorySerializer, GenreSerializer)
@@ -24,7 +24,7 @@ from .serializers import (CommentSerializer, RewiewSerializer,
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     permission_classes = [
-        IsAdminUserOrReadOnly
+        IsAdminOrReadOnly
     ]
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter
@@ -44,19 +44,25 @@ class MixinSet(
     pass
 
 
-class CategoryViewSet(MixinSet):
-    queryset = Category.objects.all().order_by("id")
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter]
-    search_fields = ["=name"]
-    lookup_field = "slug"
+    search_fields = ['name', ]
+    lookup_field = 'slug'
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class GenreViewSet(MixinSet):
     queryset = Genre.objects.all().order_by("id")
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = [filters.SearchFilter]
     search_fields = ["=name"]
     lookup_field = "slug"
