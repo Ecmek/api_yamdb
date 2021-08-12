@@ -1,17 +1,16 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets, filters
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import User
-from .serializers import (
-    AdminUserSerializer, TokenSerializer, SignupSerializer, UserSerializer
-)
 from .permissions import IsRoleAdmin
+from .serializers import (AdminUserSerializer, SignupSerializer,
+                          TokenSerializer, UserSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -22,7 +21,8 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ('username',)
 
     @action(
-        detail=False, url_path='me',
+        detail=False,
+        url_path='me', url_name='me',
         methods=['get', 'patch'],
         permission_classes=(IsAuthenticated,)
     )
@@ -81,6 +81,19 @@ def token(request):
                 {'token': str(token.access_token)},
                 status=status.HTTP_200_OK
             )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def code(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        username = serializer.data['username']
+        email = serializer.data['email']
+        user = get_object_or_404(User, username=username, email=email)
+        send_confirmation_code(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
