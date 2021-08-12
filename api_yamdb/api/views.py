@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.contrib.auth.tokens import default_token_generator
 
 from reviews.models import User
 from .serializers import (
@@ -78,21 +79,10 @@ class TokenAPIView(APIView):
             username = serializer.data['username']
             confirmation_code = serializer.data['confirmation_code']
             user = get_object_or_404(User, username=username)
-
-            try:
-                user = User.objects.get(
-                    username=username,
-                    confirmation_code=confirmation_code
-                )
-            except User.DoesNotExist:
+            if default_token_generator.check_token(user, confirmation_code):
+                token = RefreshToken.for_user(user)
                 return Response(
-                    {"detail": "Not found."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {'token': str(token.access_token)},
+                    status=status.HTTP_200_OK
                 )
-
-            token = RefreshToken.for_user(user)
-            return Response(
-                {'token': str(token.access_token)},
-                status=status.HTTP_200_OK
-            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,5 +1,3 @@
-import uuid
-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -21,4 +19,6 @@ class User(AbstractUser):
         'Биография',
         blank=True,
     )
-    confirmation_code = models.CharField(default=uuid.uuid4, max_length=36)
+
+    def __str__(self) -> str:
+        return self.username
