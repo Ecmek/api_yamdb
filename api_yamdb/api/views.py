@@ -28,7 +28,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def about_me(self, request):
         if request.method == 'GET':
-            serializer = AdminUserSerializer(request.user)
+            serializer = UserSerializer(request.user)
         if request.method == 'PATCH':
             serializer = UserSerializer(
                 request.user, data=request.data, partial=True
@@ -40,13 +40,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False, methods=['get', 'patch', 'delete'],
-        url_path=r'(?P<username>[\w\@\.\+\-\_]+)'
+        url_path=r'(?P<username>[\w\@\.\+\-\_]+)', lookup_field='username',
     )
     def get_user(self, request, username):
-        user = get_object_or_404(User, username=username)
+        user = self.get_object()
         serializer = AdminUserSerializer(user)
-        if request.method == 'PACTH':
-            serializer = UserSerializer(
+        if request.method == 'PATCH':
+            serializer = AdminUserSerializer(
                 user, data=request.data, partial=True
             )
             serializer.is_valid(raise_exception=True)
