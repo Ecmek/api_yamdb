@@ -21,9 +21,8 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ('username',)
 
     @action(
-        detail=False,
+        detail=False, methods=['get', 'patch'],
         url_path='me', url_name='me',
-        methods=['get', 'patch'],
         permission_classes=(IsAuthenticated,)
     )
     def about_me(self, request):
@@ -39,7 +38,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False, methods=['get', 'patch', 'delete'],
-        url_path=r'(?P<username>[\w\@\.\+\-]+)', lookup_field='username',
+        url_path=r'(?P<username>[\w\@\.\+\-]+)',
+        lookup_field='username', url_name='username'
     )
     def get_user(self, request, username):
         user = self.get_object()
