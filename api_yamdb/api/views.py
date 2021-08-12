@@ -1,9 +1,13 @@
-from django.shortcuts import render
-from .models import Title, Genre, Category
+from reviews.models import Title, Genre, Category, Review, Comment
 from django.db.models import Avg
-from .serializers import TitleReadSerializer, TitleWriteSerializer
+from .serializers import (TitleReadSerializer,
+                          TitleWriteSerializer,
+                          CommentSerializer,
+                          RewiewSerializer)
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, permissions, viewsets
+from rest_framework import filters, permissions, viewsets
+from api.filters import TitleFilter
+from .permissions import IsRoleAdmin
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -21,3 +25,15 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.request.method in ['POST', 'PATCH']:
             return TitleWriteSerializer
         return TitleReadSerializer
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = (IsRoleAdmin,)
+
+
+class RewiewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = RewiewSerializer
+    permission_classes = (IsRoleAdmin,)
