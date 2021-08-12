@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets, filters
 from rest_framework.views import APIView
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -28,8 +28,7 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def about_me(self, request):
-        if request.method == 'GET':
-            serializer = UserSerializer(request.user)
+        serializer = UserSerializer(request.user)
         if request.method == 'PATCH':
             serializer = UserSerializer(
                 request.user, data=request.data, partial=True
@@ -41,7 +40,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False, methods=['get', 'patch', 'delete'],
-        url_path=r'(?P<username>[\w\@\.\+\-\_]+)', lookup_field='username',
+        url_path=r'(?P<username>[\w\@\.\+\-]+)', lookup_field='username',
     )
     def get_user(self, request, username):
         user = self.get_object()
@@ -70,6 +69,18 @@ class SignupAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def signup(request):
+    if request.method == 'POST':
+        serializer = SignupSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            send_confirmation_code(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class TokenAPIView(APIView):
     permission_classes = (AllowAny,)
 
@@ -77,8 +88,8 @@ class TokenAPIView(APIView):
         serializer = TokenSerializer(data=request.data)
         if serializer.is_valid():
             username = serializer.data['username']
-            confirmation_code = serializer.data['confirmation_code']
             user = get_object_or_404(User, username=username)
+            confirmation_code = serializer.data['confirmation_code']
             if default_token_generator.check_token(user, confirmation_code):
                 token = RefreshToken.for_user(user)
                 return Response(
