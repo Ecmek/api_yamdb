@@ -1,8 +1,9 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
 class Comment(models.Model):
-    rewiew = models.ForeigKey('Rewiew', on_delete=models.CASCADE)
+    rewiew = models.ForeignKey('Rewiew', on_delete=models.CASCADE)
     text = models.TextField()
     author = models.ForeignKey('User', on_delete=models.CASCADE)
     pub_date = models.DateTimeField(auto_now_add=True)
@@ -22,3 +23,26 @@ class Rewiew(models.Model):
 
 class Title(models.Model):
     None
+
+
+ROLE_CHOICES = (
+    ('user', 'Пользователь'),
+    ('moderator', 'Модератор'),
+    ('admin', 'Администратор'),
+)
+
+
+class User(AbstractUser):
+    email = models.EmailField(unique=True,)
+    role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES,
+        default='user'
+    )
+    bio = models.TextField(
+        'Биография',
+        blank=True,
+    )
+
+    def __str__(self) -> str:
+        return self.username

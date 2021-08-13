@@ -26,4 +26,3 @@ with open(filename, 'r') as f:
     assert file != default_md, (
         f'Не забудьте оформить `{filename}`'
     )
-
