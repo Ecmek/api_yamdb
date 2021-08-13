@@ -1,14 +1,15 @@
 import csv
-from django.core.management.base import BaseCommand, CommandError
+from django.shortcuts import get_object_or_404
+from django.core.management.base import BaseCommand  # , CommandError
 # from polls.models import Question as Poll
-# from reviews.models import Title
+from reviews.models import Category, Title
 # import os
 
 # print(os.path.join(os.path.dirname(__file__), '..', 'b', 'titles.csv'))
 
 
 class Command(BaseCommand):
-    help = 'Переносит данные из файла csv в базу данных'
+    help = 'Переносит данные из файла csv в базу данных'  # Александр Иванов: "желательно, чтобы ревьюер смог воспроизвести БД :slightly_smiling_face:"
 
     # def add_arguments(self, parser):  # <-- можно использовать
     #     # Можно использовать для указания количества записей, которые нужно
@@ -28,6 +29,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Обработка средствами библиотеки csv
 
+        with open('a:/Dev/api_yamdb/api_yamdb/static/data/category.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
+            reader = csv.DictReader(file_obj, delimiter=',')
+            for line in reader:
+                # print(line["id"])
+                # print(line["name"])
+                # print(line["slug"])
+
+                Category.objects.create(
+                    name=line["name"],
+                    slug=line["slug"]
+                )  # !genre нет в title.csv
+
         with open('a:/Dev/api_yamdb/api_yamdb/static/data/titles.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
             reader = csv.DictReader(file_obj, delimiter=',')
             for line in reader:
@@ -35,7 +48,24 @@ class Command(BaseCommand):
                 print(line["name"])
                 print(line["year"])
                 print(line["category"])
-                # Title.create(name=, year=, category=, genre=None)  # !genre нет в title.csv
+
+                category = get_object_or_404(Category, pk=line["category"])
+                Title.objects.create(
+                    name=line["name"],
+                    year=line["year"],
+                    category=category
+                    # genre=None
+                )  # !genre нет в title.csv
+
+                # try:
+                #     Title.create(
+                #         name=line["name"],
+                #         year=["year"],
+                #         category=line["category"],
+                #         genre=None
+                #     )  # !genre нет в title.csv
+                # except:
+                #     raise CommandError('Error')
 
 
 # class Command(BaseCommand):
