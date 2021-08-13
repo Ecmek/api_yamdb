@@ -26,13 +26,21 @@ class Review(models.Model):
 
 ################################################################################
 ################################################################################
+class GenreTitle(models.Model):
+    genre = models.ForeignKey('Genre', on_delete=models.CASCADE)
+    title = models.ForeignKey('Title', on_delete=models.CASCADE)
+
+
 class Title(models.Model):
     name = models.CharField(max_length=50)
     year = models.IntegerField()
     # rating = models.IntegerField(null=True, blank=True)  # ??????????????????????????????????????????
     description = models.CharField(max_length=200, null=True, blank=True)
+    # genre = models.ManyToManyField(
+    #     'Genre', through=GenreTitle, blank=True  # blank=True ???
+    # )
     genre = models.ManyToManyField(
-        'Genre', blank=True  # blank=True ???
+        'Genre', through=GenreTitle  # blank=True ???
     )
     category = models.ForeignKey(
         'Category', on_delete=models.SET_NULL, null=True, blank=True  # blank=True ???
