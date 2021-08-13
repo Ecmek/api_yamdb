@@ -73,8 +73,24 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
 ################################################################################
 ################################################################################
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = ('name', 'slug')
+
+
+class GenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Genre
+        fields = ('name', 'slug')
+
+
 class TitleSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
+    category = CategorySerializer()
+    # genre = GenreSerializer()
 
     class Meta:
         model = Title
@@ -86,16 +102,6 @@ class TitleSerializer(serializers.ModelSerializer):
         title = get_object_or_404(Title, id=obj.id)
         rating = title.reviews.all().aggregate(Avg('score'))
         return rating
-
-
-class CategorySerializer(serializers.ModelSerializer):
-    model = Category
-    fields = ('name', 'slug')
-
-
-class GenreSerializer(serializers.ModelSerializer):
-    model = Genre
-    fields = ('name', 'slug')
 ################################################################################
 
 
