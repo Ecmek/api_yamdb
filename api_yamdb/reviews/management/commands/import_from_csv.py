@@ -36,10 +36,16 @@ class Command(BaseCommand):
                 # print(line["name"])
                 # print(line["slug"])
 
-                Category.objects.create(
-                    name=line["name"],
-                    slug=line["slug"]
-                )  # !genre нет в title.csv
+                if Category.objects.filter(pk=line['id']).exists():
+                    category = Category.objects.get(pk=line['id'])
+                    category.name = line['name']
+                    category.slug = line['slug']
+                    category.save()
+                else:
+                    Category.objects.create(
+                        name=line["name"],
+                        slug=line["slug"]
+                    )  # !genre нет в title.csv
 
         with open('a:/Dev/api_yamdb/api_yamdb/static/data/titles.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
             reader = csv.DictReader(file_obj, delimiter=',')
