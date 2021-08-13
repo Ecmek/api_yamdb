@@ -4,12 +4,12 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
 
-from reviews.models import User, Comment, Review, Category, Genre, Title
+from reviews.models import User, Review, Category, Genre, Title
 from .permissions import (
     IsRoleAdmin, IsRoleModerator, ReadOnly, IsAuthorOrReadOnly
 )
@@ -53,7 +53,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (
-        IsRoleAdmin | IsAuthorOrReadOnly | IsRoleModerator,
+        IsRoleAdmin | IsRoleModerator | IsAuthorOrReadOnly,
     )
 
     def get_queryset(self):

@@ -70,7 +70,6 @@ class Test00UserRegistration:
             f'нельзя создать пользователя и возвращается статус {code}'
         )
 
-
     @pytest.mark.django_db(transaction=True)
     def test_00_valid_data_signup(self, client):
 
@@ -111,12 +110,12 @@ class Test00UserRegistration:
         request_type = 'POST'
         response = client.post(self.url_token)
         assert response.status_code != 404, (
-            f'Страница `{self.url_signup}` не найдена, проверьте этот адрес в *urls.py*'
+            f'Страница `{self.url_token}` не найдена, проверьте этот адрес в *urls.py*'
         )
 
         code = 400
         assert response.status_code == code, (
-            f'Проверьте, что при POST запросе `{self.url_signup}` без параметров, '
+            f'Проверьте, что при POST запросе `{self.url_token}` без параметров, '
             f'возвращается статус {code}'
         )
 
@@ -125,7 +124,7 @@ class Test00UserRegistration:
         }
         response = client.post(self.url_token, data=invalid_data)
         assert response.status_code == code, (
-            f'Проверьте, что при POST запросе `{self.url_signup}` без username, '
+            f'Проверьте, что при POST запросе `{self.url_token}` без username, '
             f'возвращается статус {code}'
         )
 
@@ -136,7 +135,7 @@ class Test00UserRegistration:
         response = client.post(self.url_token, data=invalid_data)
         code = 404
         assert response.status_code == code, (
-            f'Проверьте, что при POST запросе `{self.url_signup}` с несуществующим username, '
+            f'Проверьте, что при POST запросе `{self.url_token}` с несуществующим username, '
             f'возвращается статус {code}'
         )
 
@@ -161,7 +160,7 @@ class Test00UserRegistration:
         response = client.post(self.url_token, data=invalid_data)
         code = 400
         assert response.status_code == code, (
-            f'Проверьте, что при POST запросе `{self.url_signup}` с валидным username, '
+            f'Проверьте, что при POST запросе `{self.url_token}` с валидным username, '
             f'но невалидным confirmation_code, возвращается статус {code}'
         )
 

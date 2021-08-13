@@ -1,6 +1,5 @@
 from django.db.models import Avg
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
@@ -70,12 +69,6 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
-        # validators = [
-        #     UniqueTogetherValidator(
-        #         queryset=Review.objects.all(),
-        #         fields=('title', 'author')
-        #     )
-        # ]
 
     def validate_score(self, value):
         if not 1 <= value <= 10:
@@ -83,9 +76,6 @@ class ReviewSerializer(serializers.ModelSerializer):
                 'Оценкой должно быть целое число от 1 до 10.'
             )
         return value
-
-    def validate(self, data):
-        return data
 
 
 class UserSerializer(serializers.ModelSerializer):

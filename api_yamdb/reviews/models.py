@@ -2,16 +2,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=50)
-    slug = models.SlugField(unique=True)
-
-
-class Genre(models.Model):
-    name = models.CharField(max_length=50)
-    slug = models.SlugField(unique=True)
-
-
 class Title(models.Model):
     name = models.CharField(max_length=50)
     year = models.IntegerField()
@@ -31,6 +21,16 @@ class GenreTitle(models.Model):
 
     def __str__(self):
         return f'{self.title} {self.genre}'
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)
+
+
+class Genre(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)
 
 
 class Review(models.Model):
