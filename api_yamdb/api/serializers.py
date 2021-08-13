@@ -1,27 +1,39 @@
 from django.db.models import Avg
+
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from reviews.models import User, Comment, Rewiew, Title
+
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True
+    )
 
     class Meta:
-        fields = ('id', 'rewiew', 'text', 'author', 'pub_date')
+        fields = ('id', 'text', 'author', 'pub_date')
         model = Comment
 
 
-class RewiewSerializer(serializers.ModelSerializer):
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True
+    )
+    title = serializers.SlugRelatedField(
+        slug_field='name', read_only=True
+    )
 
     class Meta:
         fields = ('id', 'title', 'text', 'author', 'score', 'pub_date')
-        model = Rewiew
+        model = Review
 
     def validate_score(self, value):
-        if value not in range(1, 11):
+        if not 1 <= value <= 10:
             raise serializers.ValidationError(
                 'Оценкой должно быть целое число от 1 до 10.'
             )
+        return value
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -59,16 +71,34 @@ class AdminUserSerializer(serializers.ModelSerializer):
         return value
 
 
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = ('name', 'slug')
+
+
+class GenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Genre
+        fields = ('name', 'slug')
+
+
 class TitleSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
+    category = CategorySerializer()
+    # genre = GenreSerializer()
 
     class Meta:
         model = Title
-        fields = ('id', 'rating')
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+        )
 
     def get_rating(self, obj):
         title = get_object_or_404(Title, id=obj.id)
-        rating = title.rewiews.all().aggregate(Avg('score'))
+        rating = title.reviews.all().aggregate(Avg('score'))
         return rating
 
 
@@ -91,4 +121,5 @@ class TokenSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField(required=True)
 
     class Meta:
-        fields = ('username', 'confirmation_code',)
+        model = User
+        fields = ('username', 'confirmation_code')
