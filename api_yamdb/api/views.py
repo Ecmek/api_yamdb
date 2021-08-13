@@ -4,30 +4,62 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import User, Comment, Review, Category, Genre, Title
-
-from .permissions import IsRoleAdmin, ReadOnly
-from .serializers import (
-    AdminUserSerializer, SignupSerializer, TokenSerializer, UserSerializer,
-    CommentSerializer, CategorySerializer, GenreSerializer, ReviewSerializer,
-    TitleSerializer
+from .permissions import (
+    IsRoleAdmin, IsRoleModerator, ReadOnly, IsAuthorOrReadOnly
 )
+from .serializers import (
+    AdminUserSerializer, SignupSerializer, TitleCreateSerializer,
+    TokenSerializer, UserSerializer, CommentSerializer, CategorySerializer,
+    GenreSerializer, ReviewSerializer, TitleSerializer
+)
+from .filters import TitleFilter
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = (IsRoleAdmin | IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsRoleAdmin | ReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+
+    def create(self, request, *args, **kwargs):
+        serializer = TitleCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = TitleCreateSerializer(
+            instance, data=request.data, partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+        return Response(serializer.data)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+    permission_classes = (
+        IsRoleAdmin | IsAuthorOrReadOnly | IsRoleModerator,
+    )
+
+    def get_queryset(self):
+        review_id = self.kwargs.get('review_id')
+        review = get_object_or_404(Review, id=review_id)
+        return review.comments.all()
 
     def perform_create(self, serializer):
         review_id = self.kwargs.get('review_id')
@@ -36,9 +68,15 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = (IsRoleAdmin,)
+    permission_classes = (
+        IsRoleAdmin | IsAuthorOrReadOnly | IsRoleModerator,
+    )
+
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        return title.reviews.all()
 
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')

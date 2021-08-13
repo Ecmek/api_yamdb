@@ -47,11 +47,18 @@ class Review(models.Model):
     score = models.IntegerField()
     pub_date = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='unique review')
+        ]
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
         'Review', on_delete=models.CASCADE,
-        related_name='reviews'
+        related_name='comments'
     )
     text = models.TextField()
     author = models.ForeignKey(
