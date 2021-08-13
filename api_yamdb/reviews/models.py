@@ -2,11 +2,35 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
-class Comment(models.Model):
-    review = models.ForeignKey('Review', on_delete=models.CASCADE)
-    text = models.TextField()
-    author = models.ForeignKey('User', on_delete=models.CASCADE)
-    pub_date = models.DateTimeField(auto_now_add=True)
+class Category(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)
+
+
+class Genre(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True)
+
+
+class Title(models.Model):
+    name = models.CharField(max_length=50)
+    year = models.IntegerField()
+    description = models.CharField(max_length=200, null=True, blank=True)
+    genre = models.ManyToManyField(
+        'Genre', through='GenreTitle', related_name='genre'
+    )
+    category = models.ForeignKey(
+        'Category', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='category'
+    )
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey('Genre', on_delete=models.CASCADE)
+    title = models.ForeignKey('Title', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.title} {self.genre}'
 
 
 class Review(models.Model):
@@ -16,31 +40,25 @@ class Review(models.Model):
         related_name='reviews'
     )
     text = models.TextField()
-    author = models.ForeignKey('User', on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        'User', on_delete=models.CASCADE,
+        related_name='reviews'
+    )
     score = models.IntegerField()
     pub_date = models.DateTimeField(auto_now_add=True)
 
 
-class Title(models.Model):
-    name = models.CharField(max_length=50)
-    year = models.IntegerField()
-    description = models.CharField(max_length=200, null=True, blank=True)
-    genre = models.ManyToManyField(
-        'Genre', blank=True
+class Comment(models.Model):
+    review = models.ForeignKey(
+        'Review', on_delete=models.CASCADE,
+        related_name='reviews'
     )
-    category = models.ForeignKey(
-        'Category', on_delete=models.SET_NULL, null=True, blank=True
+    text = models.TextField()
+    author = models.ForeignKey(
+        'User', on_delete=models.CASCADE,
+        related_name='comments'
     )
-
-
-class Category(models.Model):
-    name = models.CharField(max_length=50)
-    slug = models.SlugField()
-
-
-class Genre(models.Model):
-    name = models.CharField(max_length=50)
-    slug = models.SlugField()
+    pub_date = models.DateTimeField(auto_now_add=True)
 
 
 ROLE_CHOICES = (

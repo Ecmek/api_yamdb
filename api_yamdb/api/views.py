@@ -4,13 +4,14 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import User, Comment, Review, Category, Genre, Title
 
-from .permissions import IsRoleAdmin
+from .permissions import IsRoleAdmin, ReadOnly
 from .serializers import (
     AdminUserSerializer, SignupSerializer, TokenSerializer, UserSerializer,
     CommentSerializer, CategorySerializer, GenreSerializer, ReviewSerializer,
@@ -21,13 +22,12 @@ from .serializers import (
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = (IsRoleAdmin,)
+    permission_classes = (IsRoleAdmin | IsAuthenticatedOrReadOnly,)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    # permission_classes = (IsRoleAdmin,)
 
     def perform_create(self, serializer):
         review_id = self.kwargs.get('review_id')
@@ -38,7 +38,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    # permission_classes = (IsRoleAdmin,)
+    permission_classes = (IsRoleAdmin,)
 
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
@@ -49,13 +49,39 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    # permission_classes = (IsRoleAdmin,)
+    permission_classes = (IsRoleAdmin | ReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+    @action(
+        detail=False, methods=['delete'],
+        url_path=r'(?P<slug>\w+)',
+        lookup_field='slug', url_name='category_slug'
+    )
+    def get_user(self, request, slug):
+        category = self.get_object()
+        serializer = CategorySerializer(category)
+        category.delete()
+        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    # permission_classes = (IsRoleAdmin,)
+    permission_classes = (IsRoleAdmin | ReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+    @action(
+        detail=False, methods=['delete'],
+        url_path=r'(?P<slug>\w+)',
+        lookup_field='slug', url_name='category_slug'
+    )
+    def get_user(self, request, slug):
+        category = self.get_object()
+        serializer = CategorySerializer(category)
+        category.delete()
+        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
 
 
 class UserViewSet(viewsets.ModelViewSet):
