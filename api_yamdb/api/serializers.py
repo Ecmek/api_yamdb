@@ -54,8 +54,10 @@ class TitleSerializer(serializers.ModelSerializer):
         )
 
     def get_rating(self, obj):
-        rating = obj.reviews.aggregate(Avg('score'))
-        return rating.get('score__avg')
+        rating = obj.reviews.aggregate(Avg('score')).get('score__avg')
+        if rating:
+            return round(rating, 1)
+        return rating
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -95,7 +97,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
         )
 
     def validate_username(self, value):
@@ -111,7 +113,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
         )
 
     def validate_username(self, value):
