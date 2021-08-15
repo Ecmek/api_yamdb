@@ -147,7 +147,7 @@ class UserViewSet(viewsets.ModelViewSet):
     /users/?search=username - search user with username
     Access have only Admin
     /users/me/ - show current user
-    allow user name self, excludes role
+    allow user namege self, excludes role
     """
     queryset = User.objects.all()
     serializer_class = AdminUserSerializer
@@ -177,10 +177,17 @@ class UserViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
+<<<<<<< HEAD
     """
     Create user with unique username and email
     then send confirmation code to email
     """
+=======
+"""
+Create user with unique username and email
+then send confirmation code to email
+"""
+>>>>>>> f17165c0783eb8e3972975d1f68113f39dc7c1d5
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
@@ -209,10 +216,17 @@ def token(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def code(request):
+<<<<<<< HEAD
     """
     if lost the confirmation code send username and email.
     And u got code again
     """
+=======
+"""
+if lost the confirmation code send username and email.
+And u got code again
+"""
+>>>>>>> f17165c0783eb8e3972975d1f68113f39dc7c1d5
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         username = serializer.data['username']
