@@ -16,7 +16,6 @@ from datetime import timedelta
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -127,6 +126,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
+
+# Относительный путь до папки с файлами .csv для переноса в базу данных:
+CSV_DATA_DIR = os.path.join(BASE_DIR, 'static/data/')
 
 # AUTH_USER_MODEL = 'users.User'
 

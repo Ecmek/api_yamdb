@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.core.management.base import BaseCommand  # , CommandError
 # from polls.models import Question as Poll
 from reviews.models import Category, Comment, Genre, Review, Title, User
-# import os
+from api_yamdb.settings import CSV_DATA_DIR
 
 # print(os.path.join(os.path.dirname(__file__), '..', 'b', 'titles.csv'))
 
@@ -33,7 +33,7 @@ class Command(BaseCommand):
         # ______________CATEGORY______________
         try:
             print('Перенос из category.csv - Старт')
-            with open('a:/Dev/api_yamdb/api_yamdb/static/data/category.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
+            with open(CSV_DATA_DIR + 'category.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
                 reader = csv.DictReader(file_obj, delimiter=',')
                 for line in reader:
                     # print(line["id"])
@@ -57,7 +57,7 @@ class Command(BaseCommand):
         # ______________TITLE______________
         try:
             print('Перенос из titles.csv - Старт')
-            with open('a:/Dev/api_yamdb/api_yamdb/static/data/titles.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
+            with open(CSV_DATA_DIR + 'titles.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
                 reader = csv.DictReader(file_obj, delimiter=',')
                 for line in reader:
                     # print(line['id'])
@@ -88,7 +88,7 @@ class Command(BaseCommand):
         # ______________USER______________
         try:
             print('Перенос из users.csv - Старт')
-            with open('a:/Dev/api_yamdb/api_yamdb/static/data/users.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
+            with open(CSV_DATA_DIR + 'users.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
                 reader = csv.DictReader(file_obj, delimiter=',')
                 for line in reader:
                     # print(line['id'])
@@ -126,7 +126,7 @@ class Command(BaseCommand):
         # ______________REVIEW______________ НЕ РАБОТАЕ - НУЖЕН USER
         try:
             print('Перенос из review.csv - Старт')
-            with open('a:/Dev/api_yamdb/api_yamdb/static/data/review.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
+            with open(CSV_DATA_DIR + 'review.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
                 reader = csv.DictReader(file_obj, delimiter=',')
                 for line in reader:
                     # print(line['id'])
@@ -163,7 +163,7 @@ class Command(BaseCommand):
         # ______________COMMENT______________
         try:
             print('Перенос из comment.csv - Старт')
-            with open('a:/Dev/api_yamdb/api_yamdb/static/data/comments.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
+            with open(CSV_DATA_DIR + 'comments.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
                 reader = csv.DictReader(file_obj, delimiter=',')
                 for line in reader:
                     # print(line['id'])
@@ -197,7 +197,7 @@ class Command(BaseCommand):
         # ______________GENRE______________
         try:
             print('Перенос из genre.csv - Старт')
-            with open('a:/Dev/api_yamdb/api_yamdb/static/data/genre.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
+            with open(CSV_DATA_DIR + 'genre.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
                 reader = csv.DictReader(file_obj, delimiter=',')
                 for line in reader:
                     # print(line['id'])
@@ -228,7 +228,7 @@ class Command(BaseCommand):
             cursor = sqlite_connection.cursor()
             print("Подключен к SQLite")
 
-            with open('a:/Dev/api_yamdb/api_yamdb/static/data/genre_title.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
+            with open(CSV_DATA_DIR + 'genre_title.csv', encoding='utf-8') as file_obj:  # сделать относительный путь к файлу
                 reader = csv.DictReader(file_obj, delimiter=',')
                 for line in reader:
                     # print(line['id'])
