@@ -1,10 +1,14 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Title(models.Model):
     name = models.CharField(max_length=50)
-    year = models.IntegerField()
+    year = models.IntegerField(
+        validators=[MaxValueValidator(timezone.now().year)]
+    )
     description = models.CharField(max_length=200, null=True, blank=True)
     genre = models.ManyToManyField(
         'Genre', through='GenreTitle', related_name='genre'
@@ -44,7 +48,12 @@ class Review(models.Model):
         'User', on_delete=models.CASCADE,
         related_name='reviews'
     )
-    score = models.IntegerField()
+    score = models.IntegerField(
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(10)
+        ]
+    )
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -78,7 +87,7 @@ ROLE_CHOICES = (
 class User(AbstractUser):
     email = models.EmailField(unique=True,)
     role = models.CharField(
-        max_length=10,
+        max_length=15,
         choices=ROLE_CHOICES,
         default='user'
     )

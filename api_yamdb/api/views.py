@@ -1,31 +1,32 @@
-from rest_framework import viewsets
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, viewsets, serializers
+from rest_framework import filters, serializers, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from django_filters.rest_framework import DjangoFilterBackend
 
-from reviews.models import User, Review, Category, Genre, Title
-from .permissions import (
-    IsRoleAdmin, IsRoleModerator, ReadOnly, IsAuthorOrReadOnly
-)
-from .serializers import (
-    AdminUserSerializer, SignupSerializer, TitleCreateSerializer,
-    TokenSerializer, UserSerializer, CommentSerializer, CategorySerializer,
-    GenreSerializer, ReviewSerializer, TitleSerializer
-)
+from reviews.models import Category, Genre, Review, Title, User
 from .filters import TitleFilter
+from .permissions import (IsAuthorOrReadOnly, IsRoleAdmin, IsRoleModerator,
+                          ReadOnly)
+from .serializers import (AdminUserSerializer, CategorySerializer,
+                          CommentSerializer, GenreSerializer, ReviewSerializer,
+                          SignupSerializer, TitleCreateSerializer,
+                          TitleSerializer, TokenSerializer, UserSerializer)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    """
+    titles/ - get all titles
+    titles/{id}/ - get title with id
+    titles/?gerne,category,year,name - filter titles
+    Admin can manage titles, other can only read
+    """
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     permission_classes = (IsRoleAdmin | ReadOnly,)
-    filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
@@ -34,24 +35,13 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSerializer
 
 
-class CommentViewSet(viewsets.ModelViewSet):
-    serializer_class = CommentSerializer
-    permission_classes = (
-        IsRoleAdmin | IsRoleModerator | IsAuthorOrReadOnly,
-    )
-
-    def get_queryset(self):
-        review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, id=review_id)
-        return review.comments.all()
-
-    def perform_create(self, serializer):
-        review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, id=review_id)
-        serializer.save(author=self.request.user, review=review)
-
-
 class ReviewViewSet(viewsets.ModelViewSet):
+    """
+    /titles/{title_id}/reviews/ - get all reviews on title
+    /titles/{title_id}/reviews/{id}/ - get title with id
+    Admin, Moderator can manage reviews
+    User can manage self reviews
+    """
     serializer_class = ReviewSerializer
     permission_classes = (
         IsRoleAdmin | IsRoleModerator | IsAuthorOrReadOnly,
@@ -73,7 +63,39 @@ class ReviewViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, title=title)
 
 
+class CommentViewSet(viewsets.ModelViewSet):
+    """
+    /titles/{title_id}/reviews/{review_id}/comments/
+    get all comments and review with id
+    /titles/{title_id}/reviews/{review_id}/comments/{id}/
+    git comment with id
+    Admin, Moderator can manage comments
+    User can manage self comments
+    """
+    serializer_class = CommentSerializer
+    permission_classes = (
+        IsRoleAdmin | IsRoleModerator | IsAuthorOrReadOnly,
+    )
+
+    def get_queryset(self):
+        review_id = self.kwargs.get('review_id')
+        review = get_object_or_404(Review, id=review_id)
+        return review.comments.all()
+
+    def perform_create(self, serializer):
+        review_id = self.kwargs.get('review_id')
+        review = get_object_or_404(Review, id=review_id)
+        serializer.save(author=self.request.user, review=review)
+
+
 class GenreViewSet(viewsets.ModelViewSet):
+    """
+    /genres/ - get all genres
+    /genres/{id}/ - get genre with id
+    /genres/{slug}/ - delete genre with slug
+    /genres/?search=name - search genre with name
+    Admin can manage genres, other can only read
+    """
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsRoleAdmin | ReadOnly,)
@@ -93,6 +115,13 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    /categories/ - get all categories
+    /categories/{id}/ - get category with id
+    /categories/{slug}/ - delete category with slug
+    /genres/?search=name - search category with name
+    Admin can manage genres, other can only read
+    """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsRoleAdmin | ReadOnly,)
@@ -112,10 +141,21 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    /users/ - get all users
+    /users/{id}/ - get users with id
+    /users/{username}/ - manage user with username
+    /users/?search=username - search user with username
+    Access have only Admin
+    /users/me/ - show current user
+    allow user name self, excludes role
+    """
     queryset = User.objects.all()
     serializer_class = AdminUserSerializer
     permission_classes = (IsRoleAdmin,)
     filter_backends = (filters.SearchFilter,)
+    lookup_field = 'username'
+    lookup_value_regex = r'[\w\@\.\+\-]+'
     search_fields = ('username',)
 
     @action(
@@ -132,25 +172,6 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(
-        detail=False, methods=['get', 'patch', 'delete'],
-        url_path=r'(?P<username>[\w\@\.\+\-]+)',
-        lookup_field='username', url_name='username'
-    )
-    def get_user(self, request, username):
-        user = self.get_object()
-        serializer = AdminUserSerializer(user)
-        if request.method == 'PATCH':
-            serializer = AdminUserSerializer(
-                user, data=request.data, partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-        if request.method == 'DELETE':
-            user.delete()
-            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

@@ -1,4 +1,5 @@
 from django.db.models import Avg
+from django.utils import timezone
 from rest_framework import serializers
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
@@ -31,6 +32,14 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'year', 'description', 'genre', 'category'
         )
+
+    def validate_year(self, value):
+        current_year = timezone.now().year
+        if value > current_year:
+            raise serializers.ValidationError(
+                'invalid year'
+            )
+        return value
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -73,7 +82,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     def validate_score(self, value):
         if not 1 <= value <= 10:
             raise serializers.ValidationError(
-                'Оценкой должно быть целое число от 1 до 10.'
+                'Score must be in range 1-10 and integer'
             )
         return value
 
