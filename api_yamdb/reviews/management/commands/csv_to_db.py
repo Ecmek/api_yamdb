@@ -1,12 +1,15 @@
 import csv
 import sqlite3
 from django.shortcuts import get_object_or_404
-from django.core.management.base import BaseCommand  # , CommandError
+from django.core.management.base import BaseCommand
 from reviews.models import Category, Comment, Genre, Review, Title, User
 from api_yamdb.settings import CSV_DATA_DIR
 
 
 def transfer_comments(line):
+    """Записывает считанную строку из файла в базу данных.
+    """
+    # если запись с id есть в БД, перезаписываем:
     review = get_object_or_404(Review, pk=line['review_id'])
     author = get_object_or_404(User, pk=line['author'])
 
@@ -17,7 +20,7 @@ def transfer_comments(line):
         obj.year = line['author']
         obj.pub_date = line['pub_date']
         obj.save()
-    else:
+    else:  # если записи нет, то создаём:
         Comment.objects.create(
             review=review,
             text=line['text'],
@@ -27,6 +30,9 @@ def transfer_comments(line):
 
 
 def transfer_review(line):
+    """Записывает считанную строку из файла в базу данных.
+    """
+    # если запись с id есть в БД, перезаписываем:
     title = get_object_or_404(Title, pk=line['title_id'])
     author = get_object_or_404(User, pk=line['author'])
 
@@ -38,7 +44,7 @@ def transfer_review(line):
         obj.score = line['score']
         obj.pub_date = line['pub_date']
         obj.save()
-    else:
+    else:  # если записи нет, то создаём:
         Review.objects.create(
             title=title,
             text=line['text'],
@@ -49,6 +55,9 @@ def transfer_review(line):
 
 
 def transfer_users(line):
+    """Записывает считанную строку из файла в базу данных.
+    """
+    # если запись с id есть в БД, перезаписываем:
     if User.objects.filter(pk=line['id']).exists():
         obj = User.objects.get(pk=line['id'])
         obj.username = line['username']
@@ -58,7 +67,7 @@ def transfer_users(line):
         obj.first_name = line['first_name']
         obj.last_name = line['last_name']
         obj.save()
-    else:
+    else:  # если записи нет, то создаём:
         User.objects.create(
             pk=line['id'],
             username=line['username'],
@@ -71,6 +80,9 @@ def transfer_users(line):
 
 
 def transfer_titles(line):
+    """Записывает считанную строку из файла в базу данных.
+    """
+    # если запись с id есть в БД, перезаписываем:
     category = get_object_or_404(Category, pk=line['category'])
 
     if Title.objects.filter(pk=line['id']).exists():
@@ -79,7 +91,7 @@ def transfer_titles(line):
         obj.year = line['year']
         obj.category = category
         obj.save()
-    else:
+    else:  # если записи нет, то создаём:
         Title.objects.create(
             name=line['name'],
             year=line['year'],
@@ -88,12 +100,15 @@ def transfer_titles(line):
 
 
 def transfer_genre(line):
+    """Записывает считанную строку из файла в базу данных.
+    """
+    # если запись с id есть в БД, перезаписываем:
     if Genre.objects.filter(pk=line['id']).exists():
         obj = Genre.objects.get(pk=line['id'])
         obj.name = line['name']
         obj.slug = line['slug']
         obj.save()
-    else:
+    else:  # если записи нет, то создаём:
         Genre.objects.create(
             name=line['name'],
             slug=line['slug']
@@ -101,12 +116,15 @@ def transfer_genre(line):
 
 
 def transfer_category(line):
+    """Записывает считанную строку из файла в базу данных.
+    """
+    # если запись с id есть в БД, перезаписываем:
     if Category.objects.filter(pk=line['id']).exists():
         obj = Category.objects.get(pk=line['id'])
         obj.name = line['name']
         obj.slug = line['slug']
         obj.save()
-    else:
+    else:  # если записи нет, то создаём:
         Category.objects.create(
             name=line['name'],
             slug=line['slug']
@@ -167,6 +185,7 @@ def transfer_genre_title():
         file_obj.close()
 
 
+# Словарь соответствия имя файла - функция для записи в базу данных
 FUNCTIONS = [
     {
         'file_name': 'category',
@@ -196,25 +215,9 @@ FUNCTIONS = [
 
 
 class Command(BaseCommand):
-    help = 'Переносит данные из файлов .csv в базу данных'  # Александр Иванов: "желательно, чтобы ревьюер смог воспроизвести БД :slightly_smiling_face:"
-
-    # def add_arguments(self, parser):  # <-- можно использовать
-    #     # Можно использовать для указания количества записей, которые нужно
-    #     # перенести.
-    #     parser.add_argument('title_ids', nargs='+', type=int)
-
-    #     # Можно прикрутить флаговые аргументы
-    #     parser.add_argument(
-    #         '-p', '--prefix', type=str, help='Префикс для username'
-    #     )
-    #     parser.add_argument(
-    #         '-a', '--admin',
-    #         action='store_true',
-    #         help='Создание учетной записи администратора'
-    #     )
+    help = 'Переносит данные из файлов .csv в базу данных'
 
     def handle(self, *args, **options):
-        # Обработка средствами библиотеки csv
         for function in FUNCTIONS:
             try:
                 file_name = function.get('file_name')
@@ -234,100 +237,4 @@ class Command(BaseCommand):
             finally:
                 file_obj.close()
 
-        # # ______________CATEGORY______________
-        # try:
-        #     print('Перенос из category.csv - Старт')
-        #     with open(CSV_DATA_DIR + 'category.csv', encoding='utf-8') as file_obj:
-        #         reader = csv.DictReader(file_obj, delimiter=',')
-        #         for line in reader:
-        #             transfer_category(line)
-
-        #         print('Перенос из category.csv - Готово')
-        # finally:
-        #     file_obj.close()
-
-        # # ______________GENRE______________
-        # try:
-        #     print('Перенос из genre.csv - Старт')
-        #     with open(CSV_DATA_DIR + 'genre.csv', encoding='utf-8') as file_obj:
-        #         reader = csv.DictReader(file_obj, delimiter=',')
-        #         for line in reader:
-        #             transfer_genre(line)
-
-        #         print('Перенос из genre.csv - Готово')
-
-        # finally:
-        #     file_obj.close()
-
-        # # ______________TITLE______________
-        # try:
-        #     print('Перенос из titles.csv - Старт')
-        #     with open(CSV_DATA_DIR + 'titles.csv', encoding='utf-8') as file_obj:
-        #         reader = csv.DictReader(file_obj, delimiter=',')
-        #         for line in reader:
-        #             transfer_title(line)
-
-        #         print('Перенос из titles.csv - Готово')
-        # finally:
-        #     file_obj.close()
-
-        # # ______________USER______________
-        # try:
-        #     print('Перенос из users.csv - Старт')
-        #     with open(CSV_DATA_DIR + 'users.csv', encoding='utf-8') as file_obj:
-        #         reader = csv.DictReader(file_obj, delimiter=',')
-        #         for line in reader:
-        #             transfer_user(line)
-
-        #         print('Перенос из users.csv - Готово')
-        # finally:
-        #     file_obj.close()
-
-        # # ______________REVIEW______________
-        # try:
-        #     print('Перенос из review.csv - Старт')
-        #     with open(CSV_DATA_DIR + 'review.csv', encoding='utf-8') as file_obj:
-        #         reader = csv.DictReader(file_obj, delimiter=',')
-        #         for line in reader:
-        #             transfer_review(line)
-
-        #         print('Перенос из review.csv - Готово')
-
-        # finally:
-        #     file_obj.close()
-
-        # # ______________COMMENT______________
-        # try:
-        #     print('Перенос из comment.csv - Старт')
-        #     with open(CSV_DATA_DIR + 'comments.csv', encoding='utf-8') as file_obj:
-        #         reader = csv.DictReader(file_obj, delimiter=',')
-        #         for line in reader:
-        #             transfer_comment(line)
-
-        #         print('Перенос из comment.csv - Готово')
-
-        # finally:
-        #     file_obj.close()
-
         transfer_genre_title()
-
-
-# class Command(BaseCommand):
-#     help = 'Closes the specified poll for voting'
-
-#     def add_arguments(self, parser):
-#         parser.add_argument('poll_ids', nargs='+', type=int)
-
-#     def handle(self, *args, **options):
-#         for poll_id in options['poll_ids']:
-#             try:
-#                 poll = Poll.objects.get(pk=poll_id)
-#             except Poll.DoesNotExist:
-#                 raise CommandError('Poll "%s" does not exist' % poll_id)
-
-#             poll.opened = False
-#             poll.save()
-
-#             self.stdout.write(
-#                 self.style.SUCCESS('Successfully closed poll "%s"' % poll_id)
-#             )
