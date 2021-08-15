@@ -143,7 +143,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     """
     /users/ - get all users
-    /users/{id}/ - get users with id
     /users/{username}/ - manage user with username
     /users/?search=username - search user with username
     Access have only Admin
