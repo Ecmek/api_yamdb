@@ -35,9 +35,9 @@ class TitleCreateSerializer(serializers.ModelSerializer):
 
     def validate_year(self, value):
         current_year = timezone.now().year
-        if value > current_year:
+        if not 0 <= value <= current_year:
             raise serializers.ValidationError(
-                'invalid year'
+                'Проверьте год создания произведения (должен быть нашей эры).'
             )
         return value
 
@@ -84,7 +84,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     def validate_score(self, value):
         if not 1 <= value <= 10:
             raise serializers.ValidationError(
-                'Score must be in range 1-10 and integer'
+                'Оценкой может быть целое число в диапазоне от 1 до 10.'
             )
         return value
 
@@ -103,7 +103,7 @@ class UserSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError(
-                'Username me not allowed'
+                'Имя пользователя "me" не разрешено.'
             )
         return value
 
@@ -119,7 +119,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError(
-                'Username me not allowed'
+                'Имя пользователя "me" не разрешено.'
             )
         return value
 
@@ -133,7 +133,7 @@ class SignupSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError(
-                'Username me not allowed'
+                'Имя пользователя "me" не разрешено.'
             )
         return value
 

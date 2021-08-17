@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from api_yamdb.settings import ADMIN_EMAIL
 from reviews.models import Category, Genre, Review, Title, User
 from .filters import TitleFilter
 from .permissions import (IsAuthorOrReadOnly, IsRoleAdmin, IsRoleModerator,
@@ -58,7 +59,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if Review.objects.filter(
                 author=self.request.user, title=title).exists():
             raise serializers.ValidationError(
-                'You review on this title exists'
+                'Вы уже написали отзыв к этому произведению.'
             )
         serializer.save(author=self.request.user, title=title)
 
@@ -193,17 +194,19 @@ def signup(request):
 @permission_classes([AllowAny])
 def token(request):
     serializer = TokenSerializer(data=request.data)
-    if serializer.is_valid():
-        username = serializer.data['username']
-        user = get_object_or_404(User, username=username)
-        confirmation_code = serializer.data['confirmation_code']
-        if default_token_generator.check_token(user, confirmation_code):
-            token = RefreshToken.for_user(user)
-            return Response(
-                {'token': str(token.access_token)},
-                status=status.HTTP_200_OK
-            )
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    username = serializer.data['username']
+    user = get_object_or_404(User, username=username)
+    confirmation_code = serializer.data['confirmation_code']
+    if not default_token_generator.check_token(user, confirmation_code):
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    token = RefreshToken.for_user(user)
+    return Response(
+        {'token': str(token.access_token)}, status=status.HTTP_200_OK
+    )
 
 
 @api_view(['POST'])
@@ -227,6 +230,6 @@ def send_confirmation_code(user):
     confirmation_code = default_token_generator.make_token(user)
     subject = 'Код подтверждения YaMDb'
     message = f'{confirmation_code} - ваш код для авторизации на YaMDb'
-    admin_email = 'Admin@YaMDb.ru',
+    admin_email = ADMIN_EMAIL
     user_email = [user.email]
     return send_mail(subject, message, admin_email, user_email)
