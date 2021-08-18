@@ -31,6 +31,9 @@ class Title(models.Model):
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
 
+    def __str__(self):
+        return self.name
+
 
 class GenreTitle(models.Model):
     genre = models.ForeignKey('Genre', on_delete=models.CASCADE)
@@ -48,6 +51,9 @@ class Category(models.Model):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
+    def __str__(self):
+        return f'{self.name} {self.name}'
+
 
 class Genre(models.Model):
     name = models.CharField(max_length=50, verbose_name='Название')
@@ -56,6 +62,9 @@ class Genre(models.Model):
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
+
+    def __str__(self):
+        return f'{self.name} {self.name}'
 
 
 class Review(models.Model):
@@ -93,6 +102,9 @@ class Review(models.Model):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
 
+    def __str__(self):
+        return self.text
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
@@ -114,6 +126,9 @@ class Comment(models.Model):
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return self.text
 
 
 ROLE_CHOICES = (
@@ -139,30 +154,21 @@ class User(AbstractUser):
         verbose_name='Биография'
     )
 
-    def __str__(self) -> str:
-        return self.username
-
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
+    def __str__(self) -> str:
+        return self.username
+
     @property
     def is_admin(self):
-        if self.role == 'admin':
-            return True
-        else:
-            return False
+        return self.role == 'admin'
 
     @property
     def is_moderator(self):
-        if self.role == 'moderator':
-            return True
-        else:
-            return False
+        return self.role == 'moderator'
 
     @property
     def is_user(self):
-        if self.role == 'user':
-            return True
-        else:
-            return False
+        return self.role == 'user'
