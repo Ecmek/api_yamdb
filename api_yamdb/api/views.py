@@ -1,7 +1,7 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, serializers, status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -20,10 +20,11 @@ from .serializers import (AdminUserSerializer, CategorySerializer,
 
 class TitleViewSet(viewsets.ModelViewSet):
     """
+    Admin can manage titles, other can only read
+
     titles/ - get all titles
     titles/{id}/ - get title with id
     titles/?gerne,category,year,name - filter titles
-    Admin can manage titles, other can only read
     """
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
@@ -38,10 +39,11 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """
-    /titles/{title_id}/reviews/ - get all reviews on title
-    /titles/{title_id}/reviews/{id}/ - get title with id
     Admin, Moderator can manage reviews
     User can manage self reviews
+
+    /titles/{title_id}/reviews/ - get all reviews on title
+    /titles/{title_id}/reviews/{id}/ - get title with id
     """
     serializer_class = ReviewSerializer
     permission_classes = (
@@ -56,22 +58,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
         title = get_object_or_404(Title, id=title_id)
-        if Review.objects.filter(
-                author=self.request.user, title=title).exists():
-            raise serializers.ValidationError(
-                'Вы уже написали отзыв к этому произведению.'
-            )
         serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     """
+    Admin, Moderator can manage comments
+    User can manage self comments
+
     /titles/{title_id}/reviews/{review_id}/comments/
     get all comments and review with id
     /titles/{title_id}/reviews/{review_id}/comments/{id}/
     git comment with id
-    Admin, Moderator can manage comments
-    User can manage self comments
     """
     serializer_class = CommentSerializer
     permission_classes = (
@@ -91,11 +89,12 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class GenreViewSet(viewsets.ModelViewSet):
     """
+    Admin can manage genres, other can only read
+
     /genres/ - get all genres
     /genres/{id}/ - get genre with id
     /genres/{slug}/ - delete genre with slug
     /genres/?search=name - search genre with name
-    Admin can manage genres, other can only read
     """
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -117,11 +116,12 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
+    Admin can manage genres, other can only read
+
     /categories/ - get all categories
     /categories/{id}/ - get category with id
     /categories/{slug}/ - delete category with slug
     /genres/?search=name - search category with name
-    Admin can manage genres, other can only read
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -143,12 +143,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     """
+    Access have only Admin
     /users/ - get all users
     /users/{username}/ - manage user with username
     /users/?search=username - search user with username
-    Access have only Admin
+
+    Allow user namege self, excludes role
     /users/me/ - show current user
-    allow user namege self, excludes role
     """
     queryset = User.objects.all()
     serializer_class = AdminUserSerializer
@@ -227,6 +228,9 @@ def code(request):
 
 
 def send_confirmation_code(user):
+    """
+    Send confirmation code on email
+    """
     confirmation_code = default_token_generator.make_token(user)
     subject = 'Код подтверждения YaMDb'
     message = f'{confirmation_code} - ваш код для авторизации на YaMDb'
