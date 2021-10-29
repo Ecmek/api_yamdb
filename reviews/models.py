@@ -5,12 +5,12 @@ from django.utils import timezone
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Название')
+    name = models.CharField(max_length=255, verbose_name='Название')
     year = models.IntegerField(
         validators=[MaxValueValidator(timezone.now().year)], verbose_name='Год'
     )
     description = models.CharField(
-        max_length=200, null=True, blank=True, verbose_name='Описание'
+        max_length=255, null=True, blank=True, verbose_name='Описание'
     )
     genre = models.ManyToManyField(
         'Genre',
@@ -44,7 +44,7 @@ class GenreTitle(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Название')
+    name = models.CharField(max_length=255, verbose_name='Название')
     slug = models.SlugField(unique=True, verbose_name='Слаг')
 
     class Meta:
@@ -56,7 +56,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Название')
+    name = models.CharField(max_length=255, verbose_name='Название')
     slug = models.SlugField(unique=True, verbose_name='Слаг')
 
     class Meta:
@@ -144,7 +144,7 @@ class User(AbstractUser):
         verbose_name='Адрес электронной почты'
     )
     role = models.CharField(
-        max_length=15,
+        max_length=255,
         choices=ROLE_CHOICES,
         default='user',
         verbose_name='Роль'
