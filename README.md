@@ -103,4 +103,4 @@ python manage.py load_data
 ```
 
 ### Документация к API доступна после запуска
-http://127.0.0.1:8000/redoc/
+http://127.0.0.1/redoc/
