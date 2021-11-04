@@ -3,7 +3,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:12.4
+    image: postgres:12-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
@@ -11,9 +11,6 @@ services:
   web:
     build: .
     restart: always
-    command: gunicorn api_yamdb.wsgi:application --bind 0.0.0.0:8000
-    ports:
-      - "8000:8000" 
     volumes:
       - static_value:/code/static/
       - media_value:/code/media/
@@ -22,7 +19,7 @@ services:
     env_file:
       - ./.env
   nginx:
-    image: nginx:1.19.3
+    image: nginx:1.20.1-alpine
     ports:
       - "80:80"
 
