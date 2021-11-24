@@ -4,3 +4,16 @@ POSTGRES_USER=
 POSTGRES_PASSWORD=
 DB_HOST=
 DB_PORT=
+SECRET_KEY=
+ALLOWED_HOSTS= # default web
+
+DOCKER_USERNAME=
+DOCKER_PASSWORD=
+PROJECT_NAME= # name of project on DockerHub
+HOST= # ip host server
+USER= # us of host server
+SSH_KEY= # cat ~/.ssh/id_rsa
+PASSPHRASE= # if server have passphrase
+
+TELEGRAM_TO= # ur telegram id
+TELEGRAM_TOKEN= # bot token
